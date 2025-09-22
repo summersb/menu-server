@@ -1,0 +1,38 @@
+### login
+# @name login
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "mypassword"
+}
+
+> {%
+  client.global.set("authToken", response.body.token);
+%}
+
+### post new recipe
+POST http://localhost:4000/recipes
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+{
+  "title": "Pasta Salad",
+  "ingredients": [
+    { "amount": "200g", "name": "Pasta" },
+    { "amount": "100g", "name": "Tomatoes" }
+  ],
+  "instructions": [{"step_number":1,"text":"Boil pasta"}, {"step_number": 2,"text":"Mix with tomatoes"}, {"step_number": 3,"text":"Serve"}]
+}
+
+
+### List All Recipes
+GET http://localhost:4000/recipes
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+
+### Get a recipe
+GET http://localhost:4000/recipes/98351005-e747-4d60-9ace-d9519e98a093
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
