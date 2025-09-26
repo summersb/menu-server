@@ -3,6 +3,8 @@ Start by running
 docker compose up
 ```
 
+Insert test user by running the 'create-user.sql' script
+
 Monitor with grafana at http://localhost:3000
 
 Install artillery
