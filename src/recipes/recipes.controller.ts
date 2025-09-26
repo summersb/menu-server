@@ -22,6 +22,10 @@ export async function createRecipeHandler(req: AuthRequest, res: Response) {
 
 export async function getRecipeHandler(req: Request, res: Response) {
   const id = req.params.id;
+  if (isNaN(Number(id))) {
+    res.status(400).json({error: 'Invalid id'});
+    return
+  }
   const recipe = await model.getRecipeById(Number(id));
   if (!recipe) return res.status(404).json({ error: 'not found' });
   res.json(recipe);

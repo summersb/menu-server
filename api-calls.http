@@ -36,7 +36,15 @@ GET http://localhost:8080/recipes
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
+> {%
+  client.global.set("id", response.body[0].id)
+ %}
 ### Get a recipe
-GET http://localhost:8080/recipes/98351005-e747-4d60-9ace-d9519e98a093
+GET http://localhost:8080/recipes/{{id}}
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
+
+### Delete a recipe
+DELETE http://localhost:8080/recipes/{{id}}
+Authorization: Bearer {{authToken}}
+
