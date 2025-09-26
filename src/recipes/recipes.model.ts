@@ -1,44 +1,63 @@
-import { pool } from '../db';
+import {pool } from '../db';
 import { RecipeInput } from '../types';
 
-export async function createRecipe(userId: string, data: RecipeInput) {
+export async function createRecipe(userId: string, data: RecipeInput): Promise<RecipeInput> {
   const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const r = await client.query(
-      `INSERT INTO recipes (user_id, title) VALUES ($1, $2) RETURNING id, title, created_at`,
-      [userId, data.title]
-    );
-    const recipe = r.rows[0];
-    const recipeId = recipe.id;
+    try {
+      await client.query('BEGIN');
 
-    // Insert ingredients
-    for (const ing of data.ingredients) {
-      await client.query(
-        `INSERT INTO ingredients (recipe_id, amount, name) VALUES ($1, $2, $3)`,
-        [recipeId, ing.amount, ing.name]
+      // Insert recipe
+      const r = await client.query(
+        `INSERT INTO recipes (user_id, title)
+         VALUES ($1, $2) RETURNING id, user_id, title, created_at`,
+        [userId, data.title],
       );
+      const recipe = r.rows[0];
+      const recipeId = recipe.id;
+
+      // Batch insert ingredients
+      if (data.ingredients.length > 0) {
+        const values = data.ingredients
+          .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`)
+          .join(', ');
+        const params = data.ingredients.flatMap((ing) => [recipeId, ing.amount, ing.name]);
+        await client.query(
+          `INSERT INTO ingredients (recipe_id, amount, name) VALUES ${values}`,
+          params,
+        );
+      }
+
+      // Batch insert instructions
+      if (data.instructions.length > 0) {
+        const values = data.instructions
+          .map((_, i) => `($${i * 3 + 1}, $${i * 3 + 2}, $${i * 3 + 3})`)
+          .join(', ');
+        const params = data.instructions.flatMap((ins) => [recipeId, ins.step_number, ins.text]);
+        await client.query(
+          `INSERT INTO instructions (recipe_id, step_number, text) VALUES ${values}`,
+          params,
+        );
+      }
+
+      await client.query('COMMIT');
+      return { ...recipe, ingredients: data.ingredients, instructions: data.instructions };
+    } catch (err: any) {
+      await client.query('ROLLBACK');
+      // Log specific constraint errors
+      if (err.code === '23505') {
+        // Unique violation (e.g., uniq_step_per_recipe)
+        throw new Error(`Duplicate step_number in instructions: ${err.detail}`);
+      } else if (err.code === '23503') {
+        // Foreign key violation (e.g., invalid user_id)
+        throw new Error(`Invalid user_id: ${err.detail}`);
+      }
+      throw err;
+    } finally {
+      client.release()
     }
-    // Insert instructions
-    for (const ins of data.instructions) {
-      await client.query(
-        `INSERT INTO instructions (recipe_id, step_number, text) VALUES ($1, $2, $3)`,
-        [recipeId, ins.step_number, ins.text]
-      );
-    }
-    await client.query('COMMIT');
-    return recipe;
-  } catch (err) {
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    client.release();
   }
 
-}
-
-
-export async function getRecipeById(recipeId: string) {
+export async function getRecipeById(recipeId: number) {
   const client = await pool.connect();
   try {
     const r = await client.query(`SELECT id, user_id, title, created_at FROM recipes WHERE id = $1`, [recipeId]);
@@ -54,7 +73,7 @@ export async function getRecipeById(recipeId: string) {
   }
 }
 
-export async function updateRecipe(userId: string, recipeId: string, data: RecipeInput) {
+export async function updateRecipe(userId: string, recipeId: number, data: RecipeInput) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -70,12 +89,12 @@ export async function updateRecipe(userId: string, recipeId: string, data: Recip
     await client.query(`DELETE FROM ingredients WHERE recipe_id = $1`, [recipeId]);
     await client.query(`DELETE FROM instructions WHERE recipe_id = $1`, [recipeId]);
 
-    for (const ing of data.ingredients) {
+    for (const ingredient of data.ingredients) {
 
       await client.query(
         `INSERT INTO ingredients (recipe_id, amount, name) VALUES ($1, $2, $3)`,
 
-        [recipeId, ing.amount, ing.name]
+        [recipeId, ingredient.amount, ingredient.name]
       );
     }
     for (const ins of data.instructions) {
@@ -98,7 +117,7 @@ export async function updateRecipe(userId: string, recipeId: string, data: Recip
   }
 }
 
-export async function deleteRecipe(userId: string, recipeId: string) {
+export async function deleteRecipe(userId: string, recipeId: number) {
   const client = await pool.connect();
 
   try {
@@ -117,14 +136,7 @@ export async function deleteRecipe(userId: string, recipeId: string) {
 
 
 export async function listRecipes(limit = 50, offset = 0) {
-  const client = await pool.connect();
-
-  try {
-    const r = await client.query(`SELECT id, user_id, title, created_at FROM recipes ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
+    const r = await pool.query(`SELECT id, user_id, title, created_at FROM recipes ORDER BY created_at DESC LIMIT $1 OFFSET $2`, [limit, offset]);
     return r.rows;
-  } finally {
-
-    client.release();
-  }
 }
 

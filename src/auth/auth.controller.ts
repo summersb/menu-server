@@ -31,18 +31,17 @@ export async function register(req: Request, res: Response) {
       res.status(500).json({ error: 'internal error' });
     }
   } finally {
-    client.release();
+    await client.release();
   }
 }
 
 export async function login(req: Request, res: Response) {
-  console.log(req.body);
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: 'email and password required' });
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ error: 'email and password required' });
 
   const client = await pool.connect();
   try {
-    const result = await client.query(`SELECT id, password_hash FROM users WHERE email = $1`, [email]);
+    const result = await client.query(`SELECT id, password_hash FROM users WHERE email = $1`, [username]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'invalid credentials' });
 

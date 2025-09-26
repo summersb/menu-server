@@ -1,10 +1,10 @@
 ### login
 # @name login
-POST http://localhost:4000/auth/login
+POST http://localhost:8080/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "username": "test@example.com",
   "password": "mypassword"
 }
 
@@ -13,7 +13,7 @@ Content-Type: application/json
 %}
 
 ### post new recipe
-POST http://localhost:4000/recipes
+POST http://localhost:8080/recipes
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
@@ -23,16 +23,20 @@ Authorization: Bearer {{authToken}}
     { "amount": "200g", "name": "Pasta" },
     { "amount": "100g", "name": "Tomatoes" }
   ],
-  "instructions": [{"step_number":1,"text":"Boil pasta"}, {"step_number": 2,"text":"Mix with tomatoes"}, {"step_number": 3,"text":"Serve"}]
+  "instructions": [
+    {"step_number": 1, "text":"Boil pasta"},
+    {"step_number": 2, "text":"Mix with tomatoes"},
+    {"step_number": 3, "text":"Serve"}
+  ]
 }
 
 
 ### List All Recipes
-GET http://localhost:4000/recipes
+GET http://localhost:8080/recipes
 Content-Type: application/json
 Authorization: Bearer {{authToken}}
 
 ### Get a recipe
-GET http://localhost:4000/recipes/98351005-e747-4d60-9ace-d9519e98a093
+GET http://localhost:8080/recipes/98351005-e747-4d60-9ace-d9519e98a093
 Content-Type: application/json
 Authorization: Bearer {{authToken}}

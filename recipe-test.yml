@@ -1,0 +1,78 @@
+config:
+  target: "http://localhost:8080" # Replace with your server URL
+  phases:
+    - duration: 60 # Run test for 60 seconds
+      arrivalRate: 10 # 10 virtual users per second
+      name: "Warm-up phase"
+    - duration: 120 # Run test for 120 seconds
+      arrivalRate: 20 # 50 virtual users per second
+      name: "Stress phase"
+
+scenarios:
+  - name: "Create and Manage Recipe"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            username: "test@example.com"
+            password: "mypassword"
+          capture:
+            json: "$.token"
+            as: "jwtToken"
+          expect:
+            - statusCode: 200
+      - post:
+          url: "/recipes"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+            Content-Type: "application/json"
+          json:
+            title: "Test Recipe {{ $randomString(10) }}"
+            ingredients:
+              - name: "ingredient1"
+                amount: "1 cup"
+              - name: "ingredient2"
+                amount: "2 cup"
+            instructions:
+              - step_number: 1
+                text: "Cook it well"
+          capture:
+            json: "$.recipeId"
+            as: "recipeId"
+          expect:
+            - statusCode: 201
+      - get:
+          url: "/recipes/{{ recipeId }}"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+            Content-Type: "application/json"
+          expect:
+            - statusCode: 200
+      - put:
+          url: "/recipes/{{ recipeId }}"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+            Content-Type: "application/json"
+          json:
+            title: "Updated Recipe {{ $randomString(10) }}"
+            ingredients:
+              - name: "ingredient1"
+                amount: "1 cup"
+            instructions:
+              - step_number: 1
+                text: "Updated instructions"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/recipes?limit=50&offset=0"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+            Content-Type: "application/json"
+          expect:
+            - statusCode: 200
+      - delete:
+          url: "/recipes/{{ recipeId }}"
+          headers:
+            Authorization: "Bearer {{ jwtToken }}"
+          expect:
+            - statusCode: 200
