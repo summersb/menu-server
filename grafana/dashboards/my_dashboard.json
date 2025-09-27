@@ -18,13 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
+  "id": 1,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "cez7abebgstfkf"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -83,9 +83,128 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 5,
-        "w": 24,
+        "h": 4,
+        "w": 12,
         "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.2.0",
+      "targets": [
+        {
+          "editorMode": "builder",
+          "expr": "rate(http_request_errors_total[1m])",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Errors",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "{app=\"default\", instance=\"app:3000\", job=\"express-apps\", method=\"POST\", route=\"/auth/login\", status=\"200\"}"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 22,
+        "w": 12,
+        "x": 12,
         "y": 0
       },
       "id": 3,
@@ -107,50 +226,24 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "cez7abebgstfkf"
+            "uid": "PBFA97CFB590B2093"
           },
           "editorMode": "builder",
-          "expr": "rate(http_request_duration_seconds_sum[1m])",
+          "expr": "rate(http_request_duration_seconds_sum[$__rate_interval])",
           "hide": false,
           "instant": false,
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "cez7abebgstfkf"
-          },
-          "editorMode": "builder",
-          "expr": "rate(http_request_duration_seconds_count[1m])",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "cez7abebgstfkf"
-          },
-          "editorMode": "builder",
-          "expr": "histogram_quantile(0.9, http_request_duration_seconds_bucket)",
-          "hide": false,
-          "instant": false,
-          "legendFormat": "__auto",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "New panel",
+      "title": "Request Duration",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "cez7abebgstfkf"
+        "uid": "PBFA97CFB590B2093"
       },
       "fieldConfig": {
         "defaults": {
@@ -206,13 +299,38 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "__systemRef": "hideSeriesFrom",
+            "matcher": {
+              "id": "byNames",
+              "options": {
+                "mode": "exclude",
+                "names": [
+                  "{app=\"default\", instance=\"app:3000\", job=\"express-apps\", method=\"DELETE\", route=\"/recipes/:id\", status=\"200\"}"
+                ],
+                "prefix": "All except:",
+                "readOnly": true
+              }
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": false,
+                  "tooltip": true,
+                  "viz": true
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
-        "h": 7,
-        "w": 24,
+        "h": 9,
+        "w": 12,
         "x": 0,
-        "y": 5
+        "y": 4
       },
       "id": 2,
       "options": {
@@ -251,14 +369,15 @@
           "refId": "B"
         }
       ],
-      "title": "New panel",
+      "title": "Http Request",
       "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
-        "uid": "cez7abebgstfkf"
+        "uid": "PBFA97CFB590B2093"
       },
+      "description": "show the pool state",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -316,10 +435,10 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 24,
+        "h": 10,
+        "w": 12,
         "x": 0,
-        "y": 12
+        "y": 13
       },
       "id": 1,
       "options": {
@@ -388,7 +507,7 @@
           "refId": "D"
         }
       ],
-      "title": "New panel",
+      "title": "Pool",
       "type": "timeseries"
     }
   ],
@@ -407,5 +526,5 @@
   "timezone": "browser",
   "title": "Menu Pool",
   "uid": "ad4t2ct",
-  "version": 8
+  "version": 1
 }

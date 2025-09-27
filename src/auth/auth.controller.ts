@@ -39,9 +39,8 @@ export async function login(req: Request, res: Response) {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'email and password required' });
 
-  const client = await pool.connect();
   try {
-    const result = await client.query(`SELECT id, password_hash FROM users WHERE email = $1`, [username]);
+    const result = await pool.query(`SELECT id, password_hash FROM users WHERE email = $1`, [username]);
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'invalid credentials' });
 
@@ -51,10 +50,8 @@ export async function login(req: Request, res: Response) {
     const token = jwt.sign({ userId: user.id }, JWT_SECRET!, { expiresIn: '7d' });
     res.json({ token });
   } catch (err) {
-    console.error(err);
+    console.error("Auth Error", err);
     res.status(500).json({ error: 'internal error' });
-  } finally {
-    client.release();
   }
 
 }

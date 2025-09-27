@@ -1,15 +1,13 @@
-import express from 'express';
+import express, {NextFunction, Request, Response} from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import * as authCtrl from './auth/auth.controller';
-import { requireAuth } from './auth/auth.middleware';
+import {requireAuth} from './auth/auth.middleware';
 import * as recipesCtrl from './recipes/recipes.controller';
+import register, {appId, httpRequestDuration, httpRequestErrors, httpRequestsTotal} from "./metrics";
 //import rateLimit from 'express-rate-limit';
 
 dotenv.config();
-
-import { NextFunction, Request, Response } from 'express';
-import register, {appId, httpRequestDuration, httpRequestErrors, httpRequestsTotal} from "./metrics";
 
 const app = express();
 
@@ -23,7 +21,7 @@ app.get("/metrics", async (req, res) => {
 });
 
 app.use((req, res, next) => {
-  const start = process.hrtime(); // high-resolution timer
+  const start = process.hrtime.bigint(); // high-resolution timer
 
   res.on("finish", () => {
     httpRequestsTotal.inc({ method: req.method, route: req.route?.path || req.path, status: res.statusCode, app: appId });
@@ -32,8 +30,8 @@ app.use((req, res, next) => {
       httpRequestErrors.inc({ method: req.method, route: req.route?.path || req.path, status: res.statusCode, app: appId });
     }
     // record duration
-    const diff = process.hrtime(start);
-    const durationSeconds = diff[0] + diff[1] / 1e9; // convert to seconds
+    const diff = process.hrtime.bigint() - start;
+    const durationSeconds = Number(diff) / 1e9; // convert to seconds
 
     httpRequestDuration.observe(
       {
@@ -70,6 +68,7 @@ app.put('/recipes/:id', requireAuth, recipesCtrl.updateRecipeHandler);
 app.delete('/recipes/:id', requireAuth, recipesCtrl.deleteRecipeHandler);
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  httpRequestErrors.inc({ method: req.method, route: req.route?.path || req.path, status: res.statusCode, app: appId });
   console.error('Global error:', {
     error: err.message,
     stack: err.stack || 'No stack trace available',

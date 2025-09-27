@@ -4,8 +4,8 @@ config:
     - duration: 60 # Run test for 60 seconds
       arrivalRate: 10 # 10 virtual users per second
       name: "Warm-up phase"
-    - duration: 120 # Run test for 120 seconds
-      arrivalRate: 20 # 50 virtual users per second
+    - duration: 220 # Run test for 120 seconds
+      arrivalRate: 25 # 50 virtual users per second
       name: "Stress phase"
 
 scenarios:

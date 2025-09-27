@@ -8,8 +8,8 @@ export const pool = new Pool({
 });
 
 // Optional: log pool status for debugging
-setInterval(() => {
-  console.log(
-    `[PG Pool] total=${pool.totalCount}, idle=${pool.idleCount}, used=${pool.totalCount - pool.idleCount}, waiting=${pool.waitingCount}`
-  );
-}, 1000);
+// setInterval(() => {
+//   console.log(
+//     `[PG Pool] total=${pool.totalCount}, idle=${pool.idleCount}, used=${pool.totalCount - pool.idleCount}, waiting=${pool.waitingCount}`
+//   );
+// }, 1000);
