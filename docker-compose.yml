@@ -20,6 +20,7 @@ services:
     command: npm run dev
     working_dir: /app
     environment:
+      UV_THREADPOOL_SIZE: 16
       DATABASE_URL: "postgres://${DATABASE_USER}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME}"
       JWT_SECRET: ${JWT_SECRET}
       PORT: ${APP_PORT}

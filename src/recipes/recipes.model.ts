@@ -1,10 +1,8 @@
-import {pool} from '../db';
+import {pool, withTransaction} from '../db';
 import {RecipeInput} from '../types';
 
 export async function createRecipe(userId: string, data: RecipeInput): Promise<RecipeInput> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+  return withTransaction(async (client) => {
 
     // Insert recipe
     const r = await client.query(
@@ -41,22 +39,8 @@ export async function createRecipe(userId: string, data: RecipeInput): Promise<R
       );
     }
 
-    await client.query('COMMIT');
     return {...recipe, ingredients: data.ingredients, instructions: data.instructions};
-  } catch (err: any) {
-    await client.query('ROLLBACK');
-    // Log specific constraint errors
-    if (err.code === '23505') {
-      // Unique violation (e.g., uniq_step_per_recipe)
-      throw new Error(`Duplicate step_number in instructions: ${err.detail}`);
-    } else if (err.code === '23503') {
-      // Foreign key violation (e.g., invalid user_id)
-      throw new Error(`Invalid user_id: ${err.detail}`);
-    }
-    throw err;
-  } finally {
-    client.release()
-  }
+  })
 }
 
 export async function getRecipeById(recipeId: number) {
@@ -80,9 +64,7 @@ export async function getRecipeById(recipeId: number) {
 }
 
 export async function updateRecipe(userId: string, recipeId: number, data: RecipeInput) {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+  return withTransaction(async (client) => {
     // ensure ownership
     const check = await client.query(`SELECT user_id
                                       FROM recipes
@@ -90,55 +72,34 @@ export async function updateRecipe(userId: string, recipeId: number, data: Recip
     if (check.rowCount === 0) throw {status: 404, message: 'recipe not found'};
     if (check.rows[0].user_id !== userId) throw {status: 403, message: 'forbidden'};
 
-    await client.query(`UPDATE recipes
-                        SET title = $1
-                        WHERE id = $2`, [data.title, recipeId]);
-
+    await client.query(`UPDATE recipes SET title = $1 WHERE id = $2`, [data.title, recipeId])
 
     // remove old ingredients/instructions and insert new ones
-    await client.query(`DELETE
-                        FROM ingredients
-                        WHERE recipe_id = $1`, [recipeId]);
-    await client.query(`DELETE
-                        FROM instructions
-                        WHERE recipe_id = $1`, [recipeId]);
+    await client.query(`DELETE FROM ingredients WHERE recipe_id = $1`, [recipeId]);
+    await client.query(`DELETE FROM instructions WHERE recipe_id = $1`, [recipeId]);
 
     for (const ingredient of data.ingredients) {
 
       await client.query(
-        `INSERT INTO ingredients (recipe_id, amount, name)
-         VALUES ($1, $2, $3)`,
-
+        `INSERT INTO ingredients (recipe_id, amount, name) VALUES ($1, $2, $3)`,
         [recipeId, ingredient.amount, ingredient.name]
       );
     }
     for (const ins of data.instructions) {
       await client.query(
-        `INSERT INTO instructions (recipe_id, step_number, text)
-         VALUES ($1, $2, $3)`,
-
+        `INSERT INTO instructions (recipe_id, step_number, text) VALUES ($1, $2, $3)`,
         [recipeId, ins.step_number, ins.text]
       );
     }
 
-    await client.query('COMMIT');
     return await getRecipeById(recipeId);
-
-  } catch (err) {
-
-    await client.query('ROLLBACK');
-    throw err;
-  } finally {
-    client.release();
-  }
+  })
 }
 
 export async function deleteRecipe(userId: string, recipeId: number) {
 
   // check ownership
-  const check = await pool.query(`SELECT user_id
-                                  FROM recipes
-                                  WHERE id = $1`, [recipeId]);
+  const check = await pool.query(`SELECT user_id FROM recipes WHERE id = $1`, [recipeId]);
   if (check.rowCount === 0) return {deleted: false};
   if (check.rows[0].user_id !== userId) throw {status: 403, message: 'forbidden'};
 

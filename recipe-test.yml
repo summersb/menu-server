@@ -5,7 +5,7 @@ config:
       arrivalRate: 10 # 10 virtual users per second
       name: "Warm-up phase"
     - duration: 220 # Run test for 120 seconds
-      arrivalRate: 25 # 50 virtual users per second
+      arrivalRate: 50 # 50 virtual users per second
       name: "Stress phase"
 
 scenarios:

@@ -3,6 +3,7 @@ import { pool } from '../db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import {appId, authDuration, httpRequestDuration} from "../metrics";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -40,13 +41,29 @@ export async function login(req: Request, res: Response) {
   if (!username || !password) return res.status(400).json({ error: 'email and password required' });
 
   try {
+/*    console.log("Auth db request", {
+      total: pool.totalCount,
+      idle: pool.idleCount,
+      waiting: pool.waitingCount,
+    });*/
+    const start = process.hrtime.bigint()
     const result = await pool.query(`SELECT id, password_hash FROM users WHERE email = $1`, [username]);
+    const end = process.hrtime.bigint()
     const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'invalid credentials' });
 
+    const start2 = process.hrtime.bigint()
     const match = await bcrypt.compare(password, user.password_hash);
+    const end2 = process.hrtime.bigint()
     if (!match) return res.status(401).json({ error: 'invalid credentials' });
+//    console.log("Query time", Number(end-start)/1e9, "Bcrypt Time", Number(end2-start2)/1e9)
 
+    authDuration.observe(
+      {
+        app: appId,
+      },
+      Number(end2-start2)/1e9
+    );
     const token = jwt.sign({ userId: user.id }, JWT_SECRET!, { expiresIn: '7d' });
     res.json({ token });
   } catch (err) {

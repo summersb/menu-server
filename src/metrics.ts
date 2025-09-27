@@ -26,10 +26,7 @@ export const poolWaiting = new client.Gauge({
   labelNames: ["app"],
 });
 
-[poolTotal, poolIdle, poolUsed, poolWaiting].forEach((m) => register.registerMetric(m));
-
 export const appId = process.env.APP_ID ?? "default";
-
 // Update metrics every second
 setInterval(() => {
   poolTotal.set({ app: appId }, pool.totalCount);
@@ -51,17 +48,20 @@ export const httpRequestErrors = new client.Counter({
   labelNames: ["method", "route", "status", "app"],
 });
 
-[httpRequestsTotal, httpRequestErrors].forEach((m) =>
-  register.registerMetric(m)
-);
-
 export const httpRequestDuration = new client.Histogram({
   name: "http_request_duration_seconds",
   help: "Duration of HTTP requests in seconds",
   labelNames: ["method", "route", "status", "app"],
-  buckets: [0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5], // customize as needed
+  buckets: [0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5],
 });
 
-[httpRequestDuration].forEach((m) => register.registerMetric(m));
+export const authDuration = new client.Histogram({
+  name: "auth_duration_seconds",
+  help: "Duration of auth bcrypt",
+  labelNames: ["app"],
+  buckets: [0.01, 0.05, 0.1, 0.3, 0.5, 1, 2, 5],
+});
+
+[authDuration, httpRequestDuration, httpRequestsTotal, httpRequestErrors, poolTotal, poolIdle, poolUsed, poolWaiting].forEach((m) => register.registerMetric(m));
 
 export default register;

@@ -14,6 +14,8 @@ CREATE TABLE recipes (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS idx_recipes_created_at ON recipes (created_at DESC);
+
 CREATE SEQUENCE ingredients_id_seq CACHE 100;
 CREATE TABLE ingredients (
   id BIGINT PRIMARY KEY DEFAULT  nextval('ingredients_id_seq'),
